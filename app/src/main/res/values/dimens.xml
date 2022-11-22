@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--Tubeline status item-->
+    <dimen name="item_layout_margin">1dp</dimen>
+    <dimen name="item_tubeline_color_code_width">15dp</dimen>
+
+    <dimen name="item_tubeline_name_layout_bottom_padding">30dp</dimen>
+    <dimen name="item_tubeline_name_text_size">20sp</dimen>
+
+    <dimen name="item_tubeline_status_text_size">12sp</dimen>
+
+    <dimen name="item_tubeline_layout_margin_start">10dp</dimen>
+    <dimen name="item_tubeline_layout_margin_left">15dp</dimen>
+
+</resources>

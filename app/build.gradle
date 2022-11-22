@@ -1,0 +1,89 @@
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+}
+
+android {
+    namespace 'com.tfl.tubelinestatus'
+    compileSdk 32
+
+    defaultConfig {
+        applicationId "com.tfl.tubelinestatus"
+        minSdk 24
+        targetSdk 32
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+}
+
+dependencies {
+
+    implementation 'androidx.core:core-ktx:1.7.0'
+    implementation 'androidx.appcompat:appcompat:1.5.1'
+    implementation 'com.google.android.material:material:1.7.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.4'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.0'
+
+    //Ktor
+    implementation 'io.ktor:ktor-client-gson:1.6.3'
+    //Ktor Engine
+    implementation "io.ktor:ktor-client-cio:1.6.3"
+    //Ktor log response
+    implementation "io.ktor:ktor-client-logging:1.6.1"
+    implementation "ch.qos.logback:logback-classic:1.2.3"
+
+    // for adding recyclerview
+    implementation 'androidx.recyclerview:recyclerview:1.2.0'
+
+    // for adding cardview
+    implementation 'androidx.cardview:cardview:1.0.0'
+
+    //Koin core
+    // Koin Core features
+    implementation "io.insert-koin:koin-core:$koin_version"
+    // Koin Test features
+    testImplementation "io.insert-koin:koin-test:$koin_version"
+    // Koin for JUnit 4
+    testImplementation "io.insert-koin:koin-test-junit4:$koin_version"
+    // Koin for JUnit 5
+    testImplementation "io.insert-koin:koin-test-junit5:$koin_version"
+
+    //Koin Android
+    // Koin main features for Android
+    implementation "io.insert-koin:koin-android:$koin_android_version"
+    // Java Compatibility
+    implementation "io.insert-koin:koin-android-compat:$koin_android_version"
+    // Jetpack WorkManager
+    implementation "io.insert-koin:koin-androidx-workmanager:$koin_android_version"
+    // Navigation Graph
+    implementation "io.insert-koin:koin-androidx-navigation:$koin_android_version"
+
+    //implementation "io.mockk:mockk:${mockkVersion}"
+    implementation "org.mockito:mockito-core:${mockitoVersion}"
+    implementation "org.mockito:mockito-inline:${mockitoVersion}"
+    implementation "com.nhaarman.mockitokotlin2:mockito-kotlin:${mockito_kotlin2}"
+    implementation "org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version"
+    implementation "io.insert-koin:koin-test:$koin_version"
+    implementation "androidx.arch.core:core-testing:${arch_core_version}"
+
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-test:${coroutineTest}"
+
+}
