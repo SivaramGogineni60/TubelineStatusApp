@@ -17,6 +17,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.mockito.Mock
+import org.mockito.Mockito.times
 import org.mockito.MockitoAnnotations
 import kotlin.test.assertEquals
 
@@ -67,18 +68,17 @@ class TubelineStatusViewModelTest {
     fun `GIVEN successful network response WHEN getTubelineStatuses() is called THEN emit ShowTubelineStatuses event`() = collector.test { states, _ ->
         // given
         whenever(mockTubelineStatusRepository.getAllTubelineStatuses()).thenReturn(
-            NetworkResponse.Success(mutableListOf(TubelineStatusResponse("bakerloo", "name", emptyList())))
+            NetworkResponse.Success(generateTubelineStatusResponses())
         )
-        whenever(mockUIModelMapper.mapNetworkResponseToUIModel(mutableListOf(TubelineStatusResponse("bakerloo", "name", emptyList())))).thenReturn(
-            arrayListOf(TubelineStatusUIModel(BAKERLOO_COLOR_RESOURCE_ID, "id", "name"))
+        whenever(mockUIModelMapper.mapNetworkResponseToUIModel(generateTubelineStatusResponses())).thenReturn(
+            generateTubelineStatusUIModelsData()
         )
 
         // when
         tubelineStatusViewModel.getTubelineStatuses()
 
         // then
-        Assert.assertEquals(states.last().tubelineStatus, arrayListOf(TubelineStatusUIModel(
-            BAKERLOO_COLOR_RESOURCE_ID, "id", "name")))
+        Assert.assertEquals(states.last().tubelineStatus, generateTubelineStatusUIModelsData())
     }
 
     @Test
@@ -94,24 +94,56 @@ class TubelineStatusViewModelTest {
     }
 
     @Test
-    fun `GIVEN failed network response WHEN getTubelineStatuses() is called THEN emit ShowError event`() = collector.test { _, events ->
+    fun `GIVEN we have tube status in the state WHEN getTubelineStatuses() is called THEN display data from state and do not call repo`() = collector.test { states, _ ->
         // given
-        whenever(mockTubelineStatusRepository.getAllTubelineStatuses()).thenReturn(NetworkResponse.Error(ERROR_CODE))
-        whenever(mockUIErrorMapper.mapErrorCodeToMessage(ERROR_CODE)).thenReturn(ERROR_MESSAGE)
+        whenever(mockTubelineStatusRepository.getAllTubelineStatuses()).thenReturn(
+            NetworkResponse.Success(generateTubelineStatusResponses())
+        )
+        whenever(mockUIModelMapper.mapNetworkResponseToUIModel(generateTubelineStatusResponses())).thenReturn(
+            generateTubelineStatusUIModelsData()
+        )
+        tubelineStatusViewModel.getTubelineStatuses()
 
         // when
         tubelineStatusViewModel.getTubelineStatuses()
 
         // then
-        val expectedEvents = listOf(TubelineStatusEvent.ShowError(ERROR_MESSAGE))
+        verify(mockTubelineStatusRepository, times(1)).getAllTubelineStatuses()
+    }
+
+    @Test
+    fun `GIVEN failed network response with error code -1 WHEN getTubelineStatuses() is called THEN emit ShowError event with network error message`() = collector.test { _, events ->
+        // given
+        whenever(mockTubelineStatusRepository.getAllTubelineStatuses()).thenReturn(NetworkResponse.Error(ERROR_CODE_MINUS_ONE))
+        whenever(mockUIErrorMapper.mapErrorCodeToMessage(ERROR_CODE_MINUS_ONE)).thenReturn(NETWORK_ERROR_MESSAGE)
+
+        // when
+        tubelineStatusViewModel.getTubelineStatuses()
+
+        // then
+        val expectedEvents = listOf(TubelineStatusEvent.ShowError(NETWORK_ERROR_MESSAGE))
+        assertEquals(expectedEvents, events)
+    }
+
+    @Test
+    fun `GIVEN failed network response with error code -2 WHEN getTubelineStatuses() is called THEN emit ShowError event with unknown error message`() = collector.test { _, events ->
+        // given
+        whenever(mockTubelineStatusRepository.getAllTubelineStatuses()).thenReturn(NetworkResponse.Error(ERROR_CODE_MINUS_TWO))
+        whenever(mockUIErrorMapper.mapErrorCodeToMessage(ERROR_CODE_MINUS_TWO)).thenReturn(UNKOWN_ERROR_MESSAGE)
+
+        // when
+        tubelineStatusViewModel.getTubelineStatuses()
+
+        // then
+        val expectedEvents = listOf(TubelineStatusEvent.ShowError(UNKOWN_ERROR_MESSAGE))
         assertEquals(expectedEvents, events)
     }
 
     @Test
     fun `GIVEN failed network response WHEN getTubelineStatuses() is called THEN shouldShowLoadingMessage state is set to false`() = collector.test { states, _ ->
         // given
-        whenever(mockTubelineStatusRepository.getAllTubelineStatuses()).thenReturn(NetworkResponse.Error(ERROR_CODE))
-        whenever(mockUIErrorMapper.mapErrorCodeToMessage(ERROR_CODE)).thenReturn(ERROR_MESSAGE)
+        whenever(mockTubelineStatusRepository.getAllTubelineStatuses()).thenReturn(NetworkResponse.Error(ERROR_CODE_MINUS_ONE))
+        whenever(mockUIErrorMapper.mapErrorCodeToMessage(ERROR_CODE_MINUS_ONE)).thenReturn(NETWORK_ERROR_MESSAGE)
 
         // when
         tubelineStatusViewModel.getTubelineStatuses()
@@ -120,10 +152,55 @@ class TubelineStatusViewModelTest {
         Assert.assertFalse(states.last().shouldShowLoadingMessage)
     }
 
+    private fun generateTubelineStatusResponses() =
+        mutableListOf(
+            TubelineStatusResponse("bakerloo", "name", emptyList()),
+            TubelineStatusResponse("central", "name", emptyList()),
+            TubelineStatusResponse("circle", "name", emptyList()),
+            TubelineStatusResponse("district", "name", emptyList()),
+            TubelineStatusResponse("hammersmith-city", "name", emptyList()),
+            TubelineStatusResponse("jubilee", "name", emptyList()),
+            TubelineStatusResponse("metropolitan", "name", emptyList()),
+            TubelineStatusResponse("northern", "name", emptyList()),
+            TubelineStatusResponse("piccadilly", "name", emptyList()),
+            TubelineStatusResponse("victoria", "name", emptyList()),
+            TubelineStatusResponse("waterloo-city", "name", emptyList())
+        )
+
+    private fun generateTubelineStatusUIModelsData() =
+        arrayListOf(
+            TubelineStatusUIModel(BAKERLOO_COLOR_RESOURCE_ID, "id", "name"),
+            TubelineStatusUIModel(CENTRAL_COLOR_RESOURCE_ID, "id", "name"),
+            TubelineStatusUIModel(CIRCLE_COLOR_RESOURCE_ID, "id", "name"),
+            TubelineStatusUIModel(DISTRICT_COLOR_RESOURCE_ID, "id", "name"),
+            TubelineStatusUIModel(HAMMERSMITH_CITY__COLOR_RESOURCE_ID, "id", "name"),
+            TubelineStatusUIModel(JUBLIEE_COLOR_RESOURCE_ID, "id", "name"),
+            TubelineStatusUIModel(METROPOLITAN_COLOR_RESOURCE_ID, "id", "name"),
+            TubelineStatusUIModel(NORTHERN_COLOR_RESOURCE_ID, "id", "name"),
+            TubelineStatusUIModel(PICCADILLY_COLOR_RESOURCE_ID, "id", "name"),
+            TubelineStatusUIModel(VICTORIA_COLOR_RESOURCE_ID, "id", "name"),
+            TubelineStatusUIModel(WATERLOO_CITY__COLOR_RESOURCE_ID, "id", "name")
+        )
+
     companion object {
-        const val ERROR_CODE = -1
-        const val ERROR_MESSAGE = "Network error"
+        //Error codes & message
+        const val ERROR_CODE_MINUS_ONE = -1
+        const val NETWORK_ERROR_MESSAGE = "Network error"
+        const val ERROR_CODE_MINUS_TWO = -2
+        const val UNKOWN_ERROR_MESSAGE = "Unknown error"
+
+        //color codes
         const val BAKERLOO_COLOR_RESOURCE_ID = 1432
+        const val CENTRAL_COLOR_RESOURCE_ID = 1459
+        const val CIRCLE_COLOR_RESOURCE_ID = 1456
+        const val DISTRICT_COLOR_RESOURCE_ID = 1656
+        const val HAMMERSMITH_CITY__COLOR_RESOURCE_ID = 3456
+        const val JUBLIEE_COLOR_RESOURCE_ID = 3456
+        const val METROPOLITAN_COLOR_RESOURCE_ID = 3458
+        const val NORTHERN_COLOR_RESOURCE_ID = 1114
+        const val PICCADILLY_COLOR_RESOURCE_ID = 1353
+        const val VICTORIA_COLOR_RESOURCE_ID = 1234
+        const val WATERLOO_CITY__COLOR_RESOURCE_ID = 6789
     }
 
 }
