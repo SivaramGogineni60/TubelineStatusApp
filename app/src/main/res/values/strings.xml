@@ -1,3 +1,8 @@
 <resources>
-    <string name="app_name">TubelineStatus</string>
+    <string name="app_name">Tube status</string>
+
+    // Error messages
+    <string name="network_error">Network error</string>
+    <string name="unknown_error">Unknown error</string>
+
 </resources>

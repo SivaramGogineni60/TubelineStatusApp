@@ -8,12 +8,18 @@ import androidx.annotation.NonNull
 import androidx.recyclerview.widget.RecyclerView
 import com.tfl.tubelinestatus.R
 
-internal class TubelineStatusAdapter(private var itemsList: List<TubelineStatusUiModel>) :
+internal class TubelineStatusAdapter() :
     RecyclerView.Adapter<TubelineStatusAdapter.MyViewHolder>() {
+    private var itemsList: List<TubelineStatusUIModel> = emptyList()
+
     internal inner class MyViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-        var itemColorTextView: TextView = view.findViewById(R.id.tubelineColorCodeTextView)
+        var itemColorTextView: View = view.findViewById(R.id.tubelineColorCodeTextView)
         var itemNameTextView: TextView = view.findViewById(R.id.tubelineNameTextView)
         var statusTextView: TextView = view.findViewById(R.id.StatusTextView)
+    }
+
+    fun setData(itemsList: List<TubelineStatusUIModel>) {
+        this.itemsList = itemsList
     }
     @NonNull
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MyViewHolder {

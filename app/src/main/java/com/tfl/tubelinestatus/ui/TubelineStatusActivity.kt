@@ -12,12 +12,10 @@ import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.tfl.tubelinestatus.R
-import com.tfl.tubelinestatus.managers.SessionManager
-import com.tfl.tubelinestatus.models.TubelineStatusResponse
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.viewModel
-
 
 class TubelineStatusActivity : AppCompatActivity() {
     private val viewModel by viewModel<TubelineStatusViewModel>()
@@ -27,7 +25,6 @@ class TubelineStatusActivity : AppCompatActivity() {
     private var stateJob: Job? = null
     private var eventJob: Job? = null
 
-    private val tubelineStatusList = ArrayList<TubelineStatusUiModel>()
     private lateinit var tubelineStatusAdapter: TubelineStatusAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -35,7 +32,6 @@ class TubelineStatusActivity : AppCompatActivity() {
         setContentView(R.layout.activity_tubeline_status)
         progress = findViewById(R.id.progress)
 
-        SessionManager.userToken = "copy-your-token-here"
         setupRecyclerView()
         viewModel.getTubelineStatuses()
     }
@@ -44,14 +40,15 @@ class TubelineStatusActivity : AppCompatActivity() {
         recyclerView = findViewById(R.id.recyclerView)
         recyclerView.layoutManager = LinearLayoutManager(applicationContext)
         recyclerView.addItemDecoration(DividerItemDecoration(this, DividerItemDecoration.VERTICAL))
-        tubelineStatusAdapter = TubelineStatusAdapter(tubelineStatusList)
+        tubelineStatusAdapter = TubelineStatusAdapter()
         recyclerView.adapter = tubelineStatusAdapter
     }
 
     private fun observeViewState() {
         stateJob = lifecycleScope.launch() {
-            viewModel.viewState.collect { viewState ->
+            viewModel.viewState.collectLatest { viewState ->
                 showLoadingStatus(viewState.shouldShowLoadingMessage)
+                displayTubelineStatus(viewState.tubelineStatus)
             }
         }
     }
@@ -60,61 +57,25 @@ class TubelineStatusActivity : AppCompatActivity() {
         progress.isVisible = showLoading
     }
 
+    @SuppressLint("NotifyDataSetChanged")
+    private fun displayTubelineStatus(items: List<TubelineStatusUIModel>) {
+        Log.d("TubelineStatusActivity", "ShowItems $items")
+        tubelineStatusAdapter.setData(items)
+        tubelineStatusAdapter.notifyDataSetChanged()
+    }
+
     private fun observeEvents() {
         eventJob = lifecycleScope.launch {
-            viewModel.events.collect { event ->
+            viewModel.events.collectLatest { event ->
                 when (event) {
-                    is TubelineStatusEvent.ShowTubelineStatuses -> displayTubelineStatus(event.items)
-                    is TubelineStatusEvent.ShowError -> showErrorMessage(event.errorCode)
+                    is TubelineStatusEvent.ShowError -> showErrorMessage(event.errorMessage)
                 }
             }
         }
     }
 
-    @SuppressLint("NotifyDataSetChanged")
-    private fun displayTubelineStatus(items: MutableList<TubelineStatusResponse>) {
-        Log.d("TubelineStatusActivity", "ShowItems $items")
-        UiModelMapper(items)
-        tubelineStatusAdapter.notifyDataSetChanged()
-    }
-
-    private fun UiModelMapper(items: MutableList<TubelineStatusResponse>) {
-        tubelineStatusList.clear()
-        for (status in items) {
-            tubelineStatusList.add(
-                TubelineStatusUiModel(
-                    mapColorCode(status.id),
-                    status.name,
-                    status.lineStatuses.get(0).statusSeverityDescription
-                )
-            )
-        }
-    }
-
-    private fun showErrorMessage(errorCode: Int) {
-        showToast("Error $errorCode")
-    }
-
-    private fun showToast(response: String) {
-        Toast.makeText(this, response, Toast.LENGTH_LONG).show()
-    }
-
-    private fun mapColorCode(tubelineId: String): Int {
-        val colorCodeMap: Map<String,Int> = mapOf<String,Int>(
-            "bakerloo" to resources.getColor(R.color.bakerloo),
-            "central" to resources.getColor(R.color.central),
-            "circle" to resources.getColor(R.color.circle),
-            "district" to resources.getColor(R.color.district),
-            "hammersmith-city" to resources.getColor(R.color.hammersmith_city),
-            "jubilee" to resources.getColor(R.color.jubilee),
-            "metropolitan" to resources.getColor(R.color.metropolitan),
-            "northern" to resources.getColor(R.color.northern),
-            "piccadilly" to resources.getColor(R.color.piccadilly),
-            "victoria" to resources.getColor(R.color.victoria),
-            "waterloo-city" to resources.getColor(R.color.waterloo_city)
-        )
-        colorCodeMap[tubelineId]
-        return colorCodeMap[tubelineId] ?: resources.getColor(R.color.white)
+    private fun showErrorMessage(errorMessage: String) {
+        Toast.makeText(this, errorMessage, Toast.LENGTH_LONG).show()
     }
 
     override fun onStart() {

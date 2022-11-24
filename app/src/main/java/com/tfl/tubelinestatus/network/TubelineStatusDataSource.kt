@@ -1,17 +1,17 @@
 package com.tfl.tubelinestatus.network
 
 import com.tfl.tubelinestatus.models.TubelineStatusResponse
-import com.tfl.tubelinestatus.utils.NetworkResponseCode
+import com.tfl.tubelinestatus.utils.NetworkErrorParser
 
 class TubelineStatusDataSource(
     private val tubelineStatusService: TubelineStatusService,
-    private val networkResponseCode: NetworkResponseCode
+    private val networkErrorParser: NetworkErrorParser
 ) {
     suspend fun getTubelineStatus(): NetworkResponse<MutableList<TubelineStatusResponse>> {
         return try {
             NetworkResponse.Success(tubelineStatusService.getTubelineStatus())
         } catch (e: Throwable) {
-            NetworkResponse.Error(networkResponseCode.checkError(e))
+            NetworkResponse.Error(networkErrorParser.checkError(e))
         }
     }
 }
