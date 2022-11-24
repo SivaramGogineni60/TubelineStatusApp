@@ -6,10 +6,8 @@ import com.tfl.tubelinestatus.models.TubelineStatusResponse
 import com.tfl.tubelinestatus.network.NetworkResponse
 import com.tfl.tubelinestatus.repositories.api.TubelineStatusRepository
 import com.tfl.tubelinestatus.test.TestCoroutineRule
-import com.tfl.tubelinestatus.ui.TubelineStatusEvent
-import com.tfl.tubelinestatus.ui.TubelineStatusViewModel
-import com.tfl.tubelinestatus.ui.TubelineStatusViewState
 import com.tfl.tubelinestatus.test.ViewModelFlowCollector
+import com.tfl.tubelinestatus.ui.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
@@ -29,6 +27,10 @@ class TubelineStatusViewModelTest {
 
     @Mock
     private lateinit var mockTubelineStatusRepository: TubelineStatusRepository
+    @Mock
+    private lateinit var mockUIModelMapper: UIModelMapper
+    @Mock
+    private lateinit var mockUIErrorMapper: UIErrorMapper
 
     private val testDispatcher = Dispatchers.Unconfined
     private lateinit var collector: ViewModelFlowCollector<TubelineStatusViewState, TubelineStatusEvent>
@@ -37,7 +39,7 @@ class TubelineStatusViewModelTest {
     @Before
     fun setUp() {
         MockitoAnnotations.openMocks(this)
-        tubelineStatusViewModel = TubelineStatusViewModel(mockTubelineStatusRepository, testDispatcher)
+        tubelineStatusViewModel = TubelineStatusViewModel(mockTubelineStatusRepository, testDispatcher, mockUIModelMapper, mockUIErrorMapper)
         collector = ViewModelFlowCollector(tubelineStatusViewModel.viewState, tubelineStatusViewModel.events, TestCoroutineDispatcher())
     }
 
@@ -49,7 +51,6 @@ class TubelineStatusViewModelTest {
 
             // then
             verify(mockTubelineStatusRepository).getAllTubelineStatuses()
-
         }
     }
 
@@ -59,68 +60,70 @@ class TubelineStatusViewModelTest {
         tubelineStatusViewModel.getTubelineStatuses()
 
         // then
-        Assert.assertTrue(states[states.size - 1].shouldShowLoadingMessage)
+        Assert.assertTrue(states.last().shouldShowLoadingMessage)
     }
 
     @Test
-    fun `GIVEN successful network response WHEN getTubelineStatuses() is called THEN emit ShowTubelineStatuses event`() = collector.test { _, events ->
+    fun `GIVEN successful network response WHEN getTubelineStatuses() is called THEN emit ShowTubelineStatuses event`() = collector.test { states, _ ->
         // given
         whenever(mockTubelineStatusRepository.getAllTubelineStatuses()).thenReturn(
-            NetworkResponse.Success(mutableListOf())
+            NetworkResponse.Success(mutableListOf(TubelineStatusResponse("bakerloo", "name", emptyList())))
+        )
+        whenever(mockUIModelMapper.mapNetworkResponseToUIModel(mutableListOf(TubelineStatusResponse("bakerloo", "name", emptyList())))).thenReturn(
+            arrayListOf(TubelineStatusUIModel(BAKERLOO_COLOR_RESOURCE_ID, "id", "name"))
         )
 
         // when
         tubelineStatusViewModel.getTubelineStatuses()
 
-        val expectedEvents = listOf(TubelineStatusEvent.ShowTubelineStatuses(mutableListOf()))
-        assertEquals(expectedEvents, events)
+        // then
+        Assert.assertEquals(states.last().tubelineStatus, arrayListOf(TubelineStatusUIModel(
+            BAKERLOO_COLOR_RESOURCE_ID, "id", "name")))
     }
 
     @Test
     fun `GIVEN successful network response WHEN getTubelineStatuses() is called THEN shouldShowLoadingMessage state is set to false`() = collector.test { states, _ ->
         // given
-        whenever(mockTubelineStatusRepository.getAllTubelineStatuses()).thenReturn(
-            NetworkResponse.Success(mutableListOf())
-        )
+        whenever(mockTubelineStatusRepository.getAllTubelineStatuses()).thenReturn(NetworkResponse.Success(mutableListOf()))
 
         // when
         tubelineStatusViewModel.getTubelineStatuses()
 
         // then
-        Assert.assertFalse(states[states.size - 1].shouldShowLoadingMessage)
+        Assert.assertFalse(states.last().shouldShowLoadingMessage)
     }
 
     @Test
     fun `GIVEN failed network response WHEN getTubelineStatuses() is called THEN emit ShowError event`() = collector.test { _, events ->
         // given
-        whenever(mockTubelineStatusRepository.getAllTubelineStatuses()).thenReturn(
-            NetworkResponse.Error(ERROR_CODE)
-        )
+        whenever(mockTubelineStatusRepository.getAllTubelineStatuses()).thenReturn(NetworkResponse.Error(ERROR_CODE))
+        whenever(mockUIErrorMapper.mapErrorCodeToMessage(ERROR_CODE)).thenReturn(ERROR_MESSAGE)
 
         // when
         tubelineStatusViewModel.getTubelineStatuses()
 
         // then
-        val expectedEvents = listOf(TubelineStatusEvent.ShowError(ERROR_CODE))
+        val expectedEvents = listOf(TubelineStatusEvent.ShowError(ERROR_MESSAGE))
         assertEquals(expectedEvents, events)
     }
 
     @Test
     fun `GIVEN failed network response WHEN getTubelineStatuses() is called THEN shouldShowLoadingMessage state is set to false`() = collector.test { states, _ ->
         // given
-        whenever(mockTubelineStatusRepository.getAllTubelineStatuses()).thenReturn(
-            NetworkResponse.Error(ERROR_CODE)
-        )
+        whenever(mockTubelineStatusRepository.getAllTubelineStatuses()).thenReturn(NetworkResponse.Error(ERROR_CODE))
+        whenever(mockUIErrorMapper.mapErrorCodeToMessage(ERROR_CODE)).thenReturn(ERROR_MESSAGE)
 
         // when
         tubelineStatusViewModel.getTubelineStatuses()
 
         // then
-        Assert.assertFalse(states[states.size - 1].shouldShowLoadingMessage)
+        Assert.assertFalse(states.last().shouldShowLoadingMessage)
     }
 
     companion object {
-        const val ERROR_CODE = 2
+        const val ERROR_CODE = -1
+        const val ERROR_MESSAGE = "Network error"
+        const val BAKERLOO_COLOR_RESOURCE_ID = 1432
     }
 
 }

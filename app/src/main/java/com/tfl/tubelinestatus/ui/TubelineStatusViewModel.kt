@@ -14,7 +14,9 @@ import kotlinx.coroutines.withContext
 
 class TubelineStatusViewModel(
     private val repository: TubelineStatusRepository,
-    private val dispatcher: CoroutineDispatcher
+    private val dispatcher: CoroutineDispatcher,
+    private val uiModelMapper: UIModelMapper,
+    private val uiErrorMapper: UIErrorMapper
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(TubelineStatusViewState())
@@ -24,9 +26,13 @@ class TubelineStatusViewModel(
     val events: Flow<TubelineStatusEvent> = _events
 
     fun getTubelineStatuses(scope: CoroutineScope = viewModelScope) {
-        showLoadingState()
-        scope.launch {
-            callTubelineStatuses()
+        if(_state.value.tubelineStatus.isNotEmpty()) {
+            _state.value = _state.value.copy(tubelineStatus = _state.value.tubelineStatus)
+        } else {
+            showLoadingState()
+            scope.launch {
+                callTubelineStatuses()
+            }
         }
     }
 
@@ -37,11 +43,11 @@ class TubelineStatusViewModel(
             }.apply {
                 when (this) {
                     is NetworkResponse.Success -> {
-                        _events.emit(TubelineStatusEvent.ShowTubelineStatuses(this.data))
+                        _state.value = _state.value.copy(tubelineStatus = uiModelMapper.mapNetworkResponseToUIModel(this.data))
                         hideLoadingState()
                     }
                     is NetworkResponse.Error -> {
-                        _events.emit(TubelineStatusEvent.ShowError(this.code))
+                        _events.emit(TubelineStatusEvent.ShowError(uiErrorMapper.mapErrorCodeToMessage(this.code)))
                         hideLoadingState()
                     }
                 }

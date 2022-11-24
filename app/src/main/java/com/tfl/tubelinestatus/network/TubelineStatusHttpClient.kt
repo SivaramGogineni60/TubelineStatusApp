@@ -1,7 +1,6 @@
 package com.tfl.tubelinestatus.network
 
 import android.util.Log
-import com.tfl.tubelinestatus.managers.SessionManager
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
 import io.ktor.client.features.*
@@ -20,7 +19,6 @@ class TubelineStatusHttpClient {
             header("Accept", "application/json")
             header("Content-type", "application/json")
             contentType(ContentType.Application.Json)
-            header("Authorization", "Bearer ${SessionManager.userToken}")
         }
         // Json
         install(JsonFeature) {

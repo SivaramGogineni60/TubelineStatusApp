@@ -1,6 +1,6 @@
 package com.tfl.tubelinestatus.ui
 
-data class TubelineStatusUiModel(
+data class TubelineStatusUIModel(
     val color: Int,
     val name: String,
     val statusSeverityDescription: String

@@ -3,7 +3,7 @@ package com.tfl.tubelinestatus.utils
 import io.ktor.client.features.*
 import io.ktor.util.network.*
 
-class NetworkResponseCode {
+class NetworkErrorParser {
 
     /**
      * responses status code.
